@@ -1,0 +1,76 @@
+from PIL import Image
+import numpy as np
+import logging
+import os
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def load_image(image_path):
+    """Load an image from a specified path."""
+    if not os.path.exists(image_path):
+        logging.error("The specified image path does not exist.")
+        raise FileNotFoundError(f"Image not found: {image_path}")
+    
+    logging.info(f"Loading image from: {image_path}")
+    return Image.open(image_path)
+
+def save_image(image_array, output_path):
+    """Save an image array to a specified path."""
+    logging.info(f"Saving image to: {output_path}")
+    img = Image.fromarray(image_array.astype('uint8'))
+    img.save(output_path)
+
+def encrypt_image(image_path, key):
+    """
+    Encrypt an image using pixel manipulation.
+    
+    Each pixel is shifted by the encryption key. The result is saved as 'encrypted_image.png'.
+    """
+    try:
+        img = load_image(image_path)
+        img_array = np.array(img)
+        
+        # Encrypt each pixel by adding the key, keeping values in the 0-255 range
+        logging.info("Encrypting the image...")
+        encrypted_array = (img_array + key) % 256
+        save_image(encrypted_array, "encrypted_image.png")
+        logging.info("Encryption completed successfully. Image saved as 'encrypted_image.png'.")
+    except Exception as e:
+        logging.error(f"Error during encryption: {e}")
+
+def decrypt_image(encrypted_image_path, key):
+    """
+    Decrypt an image by reversing the pixel manipulation.
+    
+    Each pixel is shifted back by the decryption key. The result is saved as 'decrypted_image.png'.
+    """
+    try:
+        img = load_image(encrypted_image_path)
+        img_array = np.array(img)
+        
+        # Decrypt each pixel by subtracting the key, keeping values in the 0-255 range
+        logging.info("Decrypting the image...")
+        decrypted_array = (img_array - key) % 256
+        save_image(decrypted_array, "decrypted_image.png")
+        logging.info("Decryption completed successfully. Image saved as 'decrypted_image.png'.")
+    except Exception as e:
+        logging.error(f"Error during decryption: {e}")
+
+def main():
+    # Get user inputs
+    image_path = input("Enter the path to the image you want to encrypt: ").strip()
+    try:
+        key = int(input("Enter an integer encryption key (0-255): ").strip())
+        if not (0 <= key <= 255):
+            raise ValueError("Key must be between 0 and 255.")
+    except ValueError as ve:
+        logging.error(f"Invalid key input: {ve}")
+        return
+    
+    # Perform encryption and decryption
+    encrypt_image(image_path, key)
+    decrypt_image("encrypted_image.png", key)
+
+if __name__ == "__main__":
+    main()
